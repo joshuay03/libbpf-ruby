@@ -1,0 +1,98 @@
+steps:
+  - label: ":ruby: Ruby 3.3"
+    plugins:
+      - docker#v5.13.0:
+          image: "ruby:3.3"
+          privileged: true
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake
+
+  - label: ":ruby: Ruby 3.3 +YJIT"
+    plugins:
+      - docker#v5.13.0:
+          image: "ruby:3.3"
+          privileged: true
+    env:
+      RUBY_YJIT_ENABLE: "1"
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake
+
+  - label: ":ruby: Ruby 3.4"
+    plugins:
+      - docker#v5.13.0:
+          image: "ruby:3.4"
+          privileged: true
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake
+
+  - label: ":ruby: Ruby 3.4 +YJIT"
+    plugins:
+      - docker#v5.13.0:
+          image: "ruby:3.4"
+          privileged: true
+    env:
+      RUBY_YJIT_ENABLE: "1"
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake
+
+  - label: ":ruby: Ruby 4.0"
+    plugins:
+      - docker#v5.13.0:
+          image: "ruby:4.0"
+          privileged: true
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake
+
+  - label: ":ruby: Ruby 4.0 +YJIT"
+    plugins:
+      - docker#v5.13.0:
+          image: "ruby:4.0"
+          privileged: true
+    env:
+      RUBY_YJIT_ENABLE: "1"
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake
+
+  - label: ":ruby: Ruby head"
+    soft_fail: true
+    plugins:
+      - docker#v5.13.0:
+          image: "rubylang/ruby:master-dev"
+          privileged: true
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev libyaml-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake
+
+  - label: ":ruby: Ruby head +YJIT"
+    soft_fail: true
+    plugins:
+      - docker#v5.13.0:
+          image: "rubylang/ruby:master-dev"
+          privileged: true
+    env:
+      RUBY_YJIT_ENABLE: "1"
+    commands:
+      - apt-get update && apt-get install -y clang libbpf-dev libelf-dev libyaml-dev
+      - ruby -v
+      - bundle install
+      - bundle exec rake

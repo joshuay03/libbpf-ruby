@@ -1,0 +1,5 @@
+# Generated from lib/libbpf-ruby/version.rb with RBS::Inline
+
+module LibBPFRuby
+  VERSION: ::String
+end

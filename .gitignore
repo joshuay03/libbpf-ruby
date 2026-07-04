@@ -1,0 +1,10 @@
+.bundle/
+.yardoc/
+doc/
+tmp/
+
+*.o
+*.so
+*.bundle
+*.gem
+Gemfile.lock
