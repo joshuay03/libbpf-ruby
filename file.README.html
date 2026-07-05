@@ -71,7 +71,7 @@
 <p>If bundler is not being used to manage dependencies, install the gem by executing:</p>
 <pre class="code bash"><code class="bash">gem install libbpf-ruby
 </code></pre>
-<p>The native extension links against <a href="https://github.com/libbpf/libbpf"><code>libbpf</code></a>, which is Linux-only. On unsupported platforms the gem installs without compiling the extension; requiring it raises <code>LoadError</code>.</p>
+<p>The native extension links against <a href="https://github.com/libbpf/libbpf"><code>libbpf</code></a>, which is Linux-only. On unsupported platforms <code>gem install</code> aborts with a message about the missing prerequisite.</p>
 <h2 id="Usage">Usage</h2>
 <pre class="code ruby"><code class="ruby"><span class='comment'># frozen_string_literal: true
 </span>
@@ -90,6 +90,7 @@
 </code></pre>
 <h2 id="Development">Development</h2>
 <p>After checking out the repo, run <code>bin/setup</code> to install dependencies. Then, run <code>bundle exec rake</code> to compile native extensions and run the tests. You can also run <code>bin/console</code> for an interactive prompt that will allow you to experiment.</p>
+<p>If you're on macOS (or any non-Linux host), <code>bin/dev</code> builds and drops you into a Docker image with <code>libbpf-dev</code>, <code>clang</code>, and Ruby preinstalled, mounting the repo at <code>/workspace</code>. Run <code>bin/dev</code> for an interactive shell, or <code>bin/dev bundle exec rake</code> to run the full build and test cycle in one shot.</p>
 <h2 id="Contributing">Contributing</h2>
 <p>Bug reports and pull requests are welcome on GitHub at <a href="https://github.com/joshuay03/libbpf-ruby">https://github.com/joshuay03/libbpf-ruby</a>. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the <a href="https://github.com/joshuay03/libbpf-ruby/blob/main/CODE_OF_CONDUCT.md">code of conduct</a>.</p>
 <h2 id="License">License</h2>
@@ -98,7 +99,7 @@
 <p>Everyone interacting in the LibBPFRuby project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the <a href="https://github.com/joshuay03/libbpf-ruby/blob/main/CODE_OF_CONDUCT.md">code of conduct</a>.</p></div></div>
 
       <div id="footer">
-  Generated on Sun Jul  5 00:38:15 2026 by
+  Generated on Sun Jul  5 01:02:31 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.44 (ruby-4.0.5).
 </div>
