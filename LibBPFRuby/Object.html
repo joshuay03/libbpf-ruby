@@ -244,7 +244,9 @@
 56
 57
 58
-59</pre>
+59
+60
+61</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 44</span>
@@ -255,12 +257,14 @@ static VALUE rb_cObject_initialize(VALUE self, VALUE path) {
   const char *path_str = StringValueCStr(path);
 
   struct bpf_object *bpf_object = bpf_object__open_file(path_str, NULL);
-  if (libbpf_get_error(bpf_object)) {
-    rb_raise(rb_eRuntimeError, &quot;bpf_object__open_file failed: %s&quot;, strerror(errno));
+  long err = libbpf_get_error(bpf_object);
+  if (err) {
+    rb_raise(rb_eRuntimeError, &quot;bpf_object__open_file failed: %s&quot;, strerror(-err));
   }
-  if (bpf_object__load(bpf_object)) {
+  err = bpf_object__load(bpf_object);
+  if (err) {
     bpf_object__close(bpf_object);
-    rb_raise(rb_eRuntimeError, &quot;bpf_object__load failed: %s&quot;, strerror(errno));
+    rb_raise(rb_eRuntimeError, &quot;bpf_object__load failed: %s&quot;, strerror(-err));
   }
   libbpf_ruby_object-&gt;bpf_object = bpf_object;
   return self;
@@ -292,18 +296,18 @@ static VALUE rb_cObject_initialize(VALUE self, VALUE path) {
       <pre class="lines">
 
 
-85
-86
 87
 88
 89
 90
 91
 92
-93</pre>
+93
+94
+95</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 85</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 87</span>
 
 static VALUE rb_cObject_close(VALUE self) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -334,8 +338,6 @@ static VALUE rb_cObject_close(VALUE self) {
       <pre class="lines">
 
 
-73
-74
 75
 76
 77
@@ -344,10 +346,12 @@ static VALUE rb_cObject_close(VALUE self) {
 80
 81
 82
-83</pre>
+83
+84
+85</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 73</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 75</span>
 
 static VALUE rb_cObject_map_fd(VALUE self, VALUE name) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -380,8 +384,6 @@ static VALUE rb_cObject_map_fd(VALUE self, VALUE name) {
       <pre class="lines">
 
 
-61
-62
 63
 64
 65
@@ -390,10 +392,12 @@ static VALUE rb_cObject_map_fd(VALUE self, VALUE name) {
 68
 69
 70
-71</pre>
+71
+72
+73</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 61</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 63</span>
 
 static VALUE rb_cObject_program_fd(VALUE self, VALUE name) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -416,7 +420,7 @@ static VALUE rb_cObject_program_fd(VALUE self, VALUE name) {
 </div>
 
       <div id="footer">
-  Generated on Sun Jul  5 01:02:31 2026 by
+  Generated on Sun Jul  5 01:09:10 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.44 (ruby-4.0.5).
 </div>
