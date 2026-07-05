@@ -21,7 +21,7 @@ If bundler is not being used to manage dependencies, install the gem by executin
 gem install libbpf-ruby
 ```
 
-The native extension links against [`libbpf`](https://github.com/libbpf/libbpf), which is Linux-only. On unsupported platforms `gem install` aborts with a message about the missing prerequisite.
+The native extension links against [`libbpf`](https://github.com/libbpf/libbpf), which is Linux-only. On unsupported platforms the gem installs without compiling the extension; requiring it at runtime raises `LoadError`.
 
 ## Usage
 
