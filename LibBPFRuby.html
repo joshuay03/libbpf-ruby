@@ -81,7 +81,7 @@
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/libbpf-ruby/version.rb<span class="defines">,<br>
-  ext/libbpf_ruby/libbpf_ruby.c</span>
+  sig/generated/libbpf-ruby/version.rbs,<br> ext/libbpf_ruby/libbpf_ruby.c</span>
 
 </dd>
   </dl>
@@ -108,7 +108,29 @@
     <dl class="constants">
       
         <dt id="VERSION-constant" class="">VERSION =
-          
+          <div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>::String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
         </dt>
         <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>0.1.0</span><span class='tstring_end'>&quot;</span></span></pre></dd>
       
@@ -242,17 +264,17 @@
       <pre class="lines">
 
 
-116
-117
-118
-119
-120
-121
-122
-123</pre>
+123
+124
+125
+126
+127
+128
+129
+130</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 116</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 123</span>
 
 static VALUE rb_mLibBPFRuby_attach_reuseport(VALUE self, VALUE socket, VALUE program_fd) {
   int sock_fd = rb_io_descriptor(socket);
@@ -282,18 +304,18 @@ static VALUE rb_mLibBPFRuby_attach_reuseport(VALUE self, VALUE socket, VALUE pro
       <pre class="lines">
 
 
-97
-98
-99
-100
-101
-102
-103
-104
-105</pre>
+113
+114
+115
+116
+117
+118
+119
+120
+121</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 97</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 113</span>
 
 static VALUE rb_mLibBPFRuby_map_lookup(VALUE self, VALUE map_fd, VALUE key, VALUE value_size) {
   Check_Type(key, T_STRING);
@@ -324,17 +346,17 @@ static VALUE rb_mLibBPFRuby_map_lookup(VALUE self, VALUE map_fd, VALUE key, VALU
       <pre class="lines">
 
 
-88
-89
-90
-91
-92
-93
-94
-95</pre>
+95
+96
+97
+98
+99
+100
+101
+102</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 88</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 95</span>
 
 static VALUE rb_mLibBPFRuby_map_update(VALUE self, VALUE map_fd, VALUE key, VALUE value) {
   Check_Type(key, T_STRING);
@@ -364,17 +386,17 @@ static VALUE rb_mLibBPFRuby_map_update(VALUE self, VALUE map_fd, VALUE key, VALU
       <pre class="lines">
 
 
+104
+105
+106
 107
 108
 109
 110
-111
-112
-113
-114</pre>
+111</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 107</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 104</span>
 
 static VALUE rb_mLibBPFRuby_sockmap_update(VALUE self, VALUE map_fd, VALUE key, VALUE socket) {
   Check_Type(key, T_STRING);
@@ -394,9 +416,9 @@ static VALUE rb_mLibBPFRuby_sockmap_update(VALUE self, VALUE map_fd, VALUE key, 
 </div>
 
       <div id="footer">
-  Generated on Sun Jul  5 00:15:12 2026 by
+  Generated on Sun Jul  5 00:38:15 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.44 (ruby-4.1.0).
+  0.9.44 (ruby-4.0.5).
 </div>
 
     </div>
