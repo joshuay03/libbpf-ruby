@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-05
+
 - Skip native extension compilation on non-Linux platforms
 
 ## [0.1.0] - 2026-07-05
