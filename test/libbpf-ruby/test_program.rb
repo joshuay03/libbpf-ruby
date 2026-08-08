@@ -79,4 +79,11 @@ class TestProgram < Minitest::Test
   ensure
     link&.detach
   end
+
+  def test_attach_tracepoint
+    link = @program.attach_tracepoint("syscalls", "sys_enter_getpid")
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+  end
 end

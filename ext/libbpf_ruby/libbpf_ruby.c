@@ -276,6 +276,15 @@ static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
   return libbpf_ruby_link_wrap(self, link);
 }
 
+static VALUE rb_cProgram_attach_tracepoint(VALUE self, VALUE category, VALUE name) {
+  struct bpf_link *link = bpf_program__attach_tracepoint(libbpf_ruby_program_bpf(self), StringValueCStr(category), StringValueCStr(name));
+  long err = libbpf_get_error(link);
+  if (err) {
+    rb_raise(rb_eRuntimeError, "bpf_program__attach_tracepoint failed: %s", strerror(-err));
+  }
+  return libbpf_ruby_link_wrap(self, link);
+}
+
 static VALUE rb_cLink_fd(VALUE self) {
   libbpf_ruby_link_t *libbpf_ruby_link;
   TypedData_Get_Struct(self, libbpf_ruby_link_t, &libbpf_ruby_link_type, libbpf_ruby_link);
@@ -365,6 +374,7 @@ RUBY_FUNC_EXPORTED void Init_libbpf_ruby(void) {
 #endif
   rb_define_method(rb_cLibBPFRubyProgram, "attach_kprobe", rb_cProgram_attach_kprobe, -1);
   rb_define_method(rb_cLibBPFRubyProgram, "attach_uprobe", rb_cProgram_attach_uprobe, -1);
+  rb_define_method(rb_cLibBPFRubyProgram, "attach_tracepoint", rb_cProgram_attach_tracepoint, 2);
 
   rb_undef_alloc_func(rb_cLibBPFRubyLink);
   rb_define_method(rb_cLibBPFRubyLink, "fd", rb_cLink_fd, 0);
