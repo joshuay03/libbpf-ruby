@@ -20,4 +20,9 @@ int test_program(struct sk_reuseport_md *ctx) {
   return SK_PASS;
 }
 
+SEC("tracepoint/syscalls/sys_enter_getpid")
+int test_tracepoint_program(void *ctx) {
+  return 0;
+}
+
 char _license[] SEC("license") = "GPL";

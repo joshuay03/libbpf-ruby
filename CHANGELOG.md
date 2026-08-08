@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Add `Program` and `Link` classes with `Program#attach`
+
 ## [0.1.1] - 2026-07-05
 
 - Skip native extension compilation on non-Linux platforms

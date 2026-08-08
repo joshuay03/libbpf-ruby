@@ -3,6 +3,8 @@
 require "test_helper"
 
 class TestObject < Minitest::Test
+  parallelize_me!
+
   def setup
     @object = LibBPFRuby::Object.new(BPF_OBJECT_PATH)
   end
@@ -18,6 +20,16 @@ class TestObject < Minitest::Test
   def test_new_raises_for_invalid_path
     assert_raises RuntimeError do
       LibBPFRuby::Object.new("nonexistent.bpf.o")
+    end
+  end
+
+  def test_program
+    assert_kind_of LibBPFRuby::Program, @object.program("test_program")
+  end
+
+  def test_program_raises_for_unknown_name
+    assert_raises RuntimeError do
+      @object.program("nonexistent")
     end
   end
 

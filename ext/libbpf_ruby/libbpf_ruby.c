@@ -7,9 +7,23 @@ static int libbpf_ruby_print(enum libbpf_print_level level, const char *format, 
   return 0;
 }
 
+static VALUE rb_cLibBPFRubyProgram;
+static VALUE rb_cLibBPFRubyLink;
+
+static ID id_ivar_object;
+static ID id_ivar_program;
+
 typedef struct {
   struct bpf_object *bpf_object;
 } libbpf_ruby_object_t;
+
+typedef struct {
+  struct bpf_program *bpf_program;
+} libbpf_ruby_program_t;
+
+typedef struct {
+  struct bpf_link *bpf_link;
+} libbpf_ruby_link_t;
 
 static void libbpf_ruby_object_free(void *ptr) {
   libbpf_ruby_object_t *libbpf_ruby_object = (libbpf_ruby_object_t *)ptr;
@@ -23,6 +37,26 @@ static size_t libbpf_ruby_object_memsize(const void *ptr) {
   return sizeof(libbpf_ruby_object_t);
 }
 
+static void libbpf_ruby_program_free(void *ptr) {
+  xfree(ptr);
+}
+
+static size_t libbpf_ruby_program_memsize(const void *ptr) {
+  return sizeof(libbpf_ruby_program_t);
+}
+
+static void libbpf_ruby_link_free(void *ptr) {
+  libbpf_ruby_link_t *libbpf_ruby_link = (libbpf_ruby_link_t *)ptr;
+  if (libbpf_ruby_link->bpf_link) {
+    bpf_link__destroy(libbpf_ruby_link->bpf_link);
+  }
+  xfree(libbpf_ruby_link);
+}
+
+static size_t libbpf_ruby_link_memsize(const void *ptr) {
+  return sizeof(libbpf_ruby_link_t);
+}
+
 static const rb_data_type_t libbpf_ruby_object_type = {
   .wrap_struct_name = "LibBPFRuby::Object",
   .function = {
@@ -33,6 +67,56 @@ static const rb_data_type_t libbpf_ruby_object_type = {
   },
   .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
+
+static const rb_data_type_t libbpf_ruby_program_type = {
+  .wrap_struct_name = "LibBPFRuby::Program",
+  .function = {
+    .dmark = NULL,
+    .dfree = libbpf_ruby_program_free,
+    .dsize = libbpf_ruby_program_memsize,
+    .dcompact = NULL
+  },
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
+static const rb_data_type_t libbpf_ruby_link_type = {
+  .wrap_struct_name = "LibBPFRuby::Link",
+  .function = {
+    .dmark = NULL,
+    .dfree = libbpf_ruby_link_free,
+    .dsize = libbpf_ruby_link_memsize,
+    .dcompact = NULL
+  },
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
+static VALUE libbpf_ruby_program_wrap(VALUE object, struct bpf_program *program) {
+  libbpf_ruby_program_t *libbpf_ruby_program;
+  VALUE obj = TypedData_Make_Struct(rb_cLibBPFRubyProgram, libbpf_ruby_program_t, &libbpf_ruby_program_type, libbpf_ruby_program);
+  libbpf_ruby_program->bpf_program = program;
+  rb_ivar_set(obj, id_ivar_object, object);
+  return obj;
+}
+
+static VALUE libbpf_ruby_link_wrap(VALUE program, struct bpf_link *link) {
+  libbpf_ruby_link_t *libbpf_ruby_link;
+  VALUE obj = TypedData_Make_Struct(rb_cLibBPFRubyLink, libbpf_ruby_link_t, &libbpf_ruby_link_type, libbpf_ruby_link);
+  libbpf_ruby_link->bpf_link = link;
+  rb_ivar_set(obj, id_ivar_program, program);
+  return obj;
+}
+
+static struct bpf_program *libbpf_ruby_program_bpf(VALUE self) {
+  libbpf_ruby_program_t *libbpf_ruby_program;
+  TypedData_Get_Struct(self, libbpf_ruby_program_t, &libbpf_ruby_program_type, libbpf_ruby_program);
+
+  libbpf_ruby_object_t *libbpf_ruby_object;
+  TypedData_Get_Struct(rb_ivar_get(self, id_ivar_object), libbpf_ruby_object_t, &libbpf_ruby_object_type, libbpf_ruby_object);
+  if (!libbpf_ruby_object->bpf_object) {
+    rb_raise(rb_eRuntimeError, "program's object is closed");
+  }
+  return libbpf_ruby_program->bpf_program;
+}
 
 static VALUE rb_cObject_allocate(VALUE klass) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -58,6 +142,18 @@ static VALUE rb_cObject_initialize(VALUE self, VALUE path) {
   }
   libbpf_ruby_object->bpf_object = bpf_object;
   return self;
+}
+
+static VALUE rb_cObject_program(VALUE self, VALUE name) {
+  libbpf_ruby_object_t *libbpf_ruby_object;
+  TypedData_Get_Struct(self, libbpf_ruby_object_t, &libbpf_ruby_object_type, libbpf_ruby_object);
+  const char *name_str = StringValueCStr(name);
+
+  struct bpf_program *program = bpf_object__find_program_by_name(libbpf_ruby_object->bpf_object, name_str);
+  if (!program) {
+    rb_raise(rb_eRuntimeError, "program %s not found", name_str);
+  }
+  return libbpf_ruby_program_wrap(self, program);
 }
 
 static VALUE rb_cObject_program_fd(VALUE self, VALUE name) {
@@ -90,6 +186,42 @@ static VALUE rb_cObject_close(VALUE self) {
   if (libbpf_ruby_object->bpf_object) {
     bpf_object__close(libbpf_ruby_object->bpf_object);
     libbpf_ruby_object->bpf_object = NULL;
+  }
+  return Qnil;
+}
+
+static VALUE rb_cProgram_fd(VALUE self) {
+  return INT2NUM(bpf_program__fd(libbpf_ruby_program_bpf(self)));
+}
+
+static VALUE rb_cProgram_name(VALUE self) {
+  return rb_str_new_cstr(bpf_program__name(libbpf_ruby_program_bpf(self)));
+}
+
+static VALUE rb_cProgram_attach(VALUE self) {
+  struct bpf_link *link = bpf_program__attach(libbpf_ruby_program_bpf(self));
+  long err = libbpf_get_error(link);
+  if (err) {
+    rb_raise(rb_eRuntimeError, "bpf_program__attach failed: %s", strerror(-err));
+  }
+  return libbpf_ruby_link_wrap(self, link);
+}
+
+static VALUE rb_cLink_fd(VALUE self) {
+  libbpf_ruby_link_t *libbpf_ruby_link;
+  TypedData_Get_Struct(self, libbpf_ruby_link_t, &libbpf_ruby_link_type, libbpf_ruby_link);
+  if (!libbpf_ruby_link->bpf_link) {
+    rb_raise(rb_eRuntimeError, "link is detached");
+  }
+  return INT2NUM(bpf_link__fd(libbpf_ruby_link->bpf_link));
+}
+
+static VALUE rb_cLink_detach(VALUE self) {
+  libbpf_ruby_link_t *libbpf_ruby_link;
+  TypedData_Get_Struct(self, libbpf_ruby_link_t, &libbpf_ruby_link_type, libbpf_ruby_link);
+  if (libbpf_ruby_link->bpf_link) {
+    bpf_link__destroy(libbpf_ruby_link->bpf_link);
+    libbpf_ruby_link->bpf_link = NULL;
   }
   return Qnil;
 }
@@ -135,14 +267,29 @@ RUBY_FUNC_EXPORTED void Init_libbpf_ruby(void) {
   rb_ext_ractor_safe(true);
   libbpf_set_print(libbpf_ruby_print);
 
+  id_ivar_object = rb_intern("@object");
+  id_ivar_program = rb_intern("@program");
+
   VALUE rb_mLibBPFRuby = rb_define_module("LibBPFRuby");
   VALUE rb_cLibBPFRubyObject = rb_define_class_under(rb_mLibBPFRuby, "Object", rb_cObject);
+  rb_cLibBPFRubyProgram = rb_define_class_under(rb_mLibBPFRuby, "Program", rb_cObject);
+  rb_cLibBPFRubyLink = rb_define_class_under(rb_mLibBPFRuby, "Link", rb_cObject);
 
   rb_define_alloc_func(rb_cLibBPFRubyObject, rb_cObject_allocate);
   rb_define_method(rb_cLibBPFRubyObject, "initialize", rb_cObject_initialize, 1);
+  rb_define_method(rb_cLibBPFRubyObject, "program", rb_cObject_program, 1);
   rb_define_method(rb_cLibBPFRubyObject, "program_fd", rb_cObject_program_fd, 1);
   rb_define_method(rb_cLibBPFRubyObject, "map_fd", rb_cObject_map_fd, 1);
   rb_define_method(rb_cLibBPFRubyObject, "close", rb_cObject_close, 0);
+
+  rb_undef_alloc_func(rb_cLibBPFRubyProgram);
+  rb_define_method(rb_cLibBPFRubyProgram, "fd", rb_cProgram_fd, 0);
+  rb_define_method(rb_cLibBPFRubyProgram, "name", rb_cProgram_name, 0);
+  rb_define_method(rb_cLibBPFRubyProgram, "attach", rb_cProgram_attach, 0);
+
+  rb_undef_alloc_func(rb_cLibBPFRubyLink);
+  rb_define_method(rb_cLibBPFRubyLink, "fd", rb_cLink_fd, 0);
+  rb_define_method(rb_cLibBPFRubyLink, "detach", rb_cLink_detach, 0);
 
   rb_define_module_function(rb_mLibBPFRuby, "map_update", rb_mLibBPFRuby_map_update, 3);
   rb_define_module_function(rb_mLibBPFRuby, "sockmap_update", rb_mLibBPFRuby_sockmap_update, 3);
