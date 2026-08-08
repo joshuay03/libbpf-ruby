@@ -53,4 +53,20 @@ class TestProgram < Minitest::Test
   ensure
     link&.detach
   end
+
+  def test_attach_kprobe
+    program = @object.program("test_kprobe_program")
+    link = program.attach_kprobe("do_nanosleep")
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+  end
+
+  def test_attach_kprobe_with_retprobe
+    program = @object.program("test_kprobe_program")
+    link = program.attach_kprobe("do_nanosleep", retprobe: true)
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+  end
 end

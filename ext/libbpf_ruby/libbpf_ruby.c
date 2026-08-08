@@ -12,6 +12,7 @@ static VALUE rb_cLibBPFRubyLink;
 
 static ID id_ivar_object;
 static ID id_ivar_program;
+static ID id_kwarg_retprobe;
 
 typedef struct {
   struct bpf_object *bpf_object;
@@ -227,6 +228,23 @@ static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
 }
 #endif
 
+static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
+  VALUE func_name, kwargs;
+  rb_scan_args(argc, argv, "1:", &func_name, &kwargs);
+  bool retprobe = false;
+  if (!NIL_P(kwargs)) {
+    VALUE value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_retprobe), Qundef);
+    if (value != Qundef) retprobe = RTEST(value);
+  }
+
+  struct bpf_link *link = bpf_program__attach_kprobe(libbpf_ruby_program_bpf(self), retprobe, StringValueCStr(func_name));
+  long err = libbpf_get_error(link);
+  if (err) {
+    rb_raise(rb_eRuntimeError, "bpf_program__attach_kprobe failed: %s", strerror(-err));
+  }
+  return libbpf_ruby_link_wrap(self, link);
+}
+
 static VALUE rb_cLink_fd(VALUE self) {
   libbpf_ruby_link_t *libbpf_ruby_link;
   TypedData_Get_Struct(self, libbpf_ruby_link_t, &libbpf_ruby_link_type, libbpf_ruby_link);
@@ -289,6 +307,7 @@ RUBY_FUNC_EXPORTED void Init_libbpf_ruby(void) {
 
   id_ivar_object = rb_intern("@object");
   id_ivar_program = rb_intern("@program");
+  id_kwarg_retprobe = rb_intern("retprobe");
 
   VALUE rb_mLibBPFRuby = rb_define_module("LibBPFRuby");
   VALUE rb_cLibBPFRubyObject = rb_define_class_under(rb_mLibBPFRuby, "Object", rb_cObject);
@@ -310,6 +329,7 @@ RUBY_FUNC_EXPORTED void Init_libbpf_ruby(void) {
 #ifdef HAVE_BPF_PROGRAM__ATTACH_TCX
   rb_define_method(rb_cLibBPFRubyProgram, "attach_tcx", rb_cProgram_attach_tcx, 1);
 #endif
+  rb_define_method(rb_cLibBPFRubyProgram, "attach_kprobe", rb_cProgram_attach_kprobe, -1);
 
   rb_undef_alloc_func(rb_cLibBPFRubyLink);
   rb_define_method(rb_cLibBPFRubyLink, "fd", rb_cLink_fd, 0);

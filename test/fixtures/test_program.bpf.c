@@ -35,4 +35,9 @@ int test_tcx_program(struct __sk_buff *skb) {
   return 0;
 }
 
+SEC("kprobe")
+int test_kprobe_program(struct pt_regs *ctx) {
+  return 0;
+}
+
 char _license[] SEC("license") = "GPL";
