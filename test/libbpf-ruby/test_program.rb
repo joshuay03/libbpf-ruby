@@ -69,4 +69,14 @@ class TestProgram < Minitest::Test
   ensure
     link&.detach
   end
+
+  def test_attach_uprobe
+    skip "libc.so.6 not found" unless LIBC_PATH
+
+    program = @object.program("test_uprobe_program")
+    link = program.attach_uprobe(LIBC_PATH, func_name: "getpid")
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+  end
 end

@@ -40,4 +40,9 @@ int test_kprobe_program(struct pt_regs *ctx) {
   return 0;
 }
 
+SEC("uprobe")
+int test_uprobe_program(struct pt_regs *ctx) {
+  return 0;
+}
+
 char _license[] SEC("license") = "GPL";

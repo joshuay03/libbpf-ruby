@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Add `Program#attach_uprobe`
 - Add `Program#attach_kprobe`
 - Add `Program#attach_tcx`
 - Add `Program#attach_xdp`
