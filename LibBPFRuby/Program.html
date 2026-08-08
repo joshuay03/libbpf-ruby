@@ -384,31 +384,33 @@
       <pre class="lines">
 
 
-197
-198
-199
-200
-201
-202
-203
-204
-205
-206
-207</pre>
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 197</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 327</span>
 
 static VALUE rb_cProgram_attach(VALUE self) {
   libbpf_ruby_program_t *libbpf_ruby_program;
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
-  struct bpf_link *link = bpf_program__attach(libbpf_ruby_program-&gt;bpf_program);
-  long err = libbpf_get_error(link);
+  nogvl_attach_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program };
+  rb_nogvl(nogvl_bpf_program__attach, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -430,31 +432,33 @@ static VALUE rb_cProgram_attach(VALUE self) {
       <pre class="lines">
 
 
-310
-311
-312
-313
-314
-315
-316
-317
-318
-319
-320</pre>
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 310</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 464</span>
 
 static VALUE rb_cProgram_attach_cgroup(VALUE self, VALUE cgroup) {
   libbpf_ruby_program_t *libbpf_ruby_program;
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
-  struct bpf_link *link = bpf_program__attach_cgroup(libbpf_ruby_program-&gt;bpf_program, rb_io_descriptor(cgroup));
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = rb_io_descriptor(cgroup) };
+  rb_nogvl(nogvl_bpf_program__attach_cgroup, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_cgroup failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -476,28 +480,33 @@ static VALUE rb_cProgram_attach_cgroup(VALUE self, VALUE cgroup) {
       <pre class="lines">
 
 
-235
-236
-237
-238
-239
-240
-241
-242
-243
-244
-245
-246
-247
-248
-249
-250
-251
-252
-253</pre>
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 235</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 368</span>
 
 static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
   VALUE func_name, kwargs;
@@ -511,12 +520,17 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
   libbpf_ruby_program_t *libbpf_ruby_program;
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
-  struct bpf_link *link = bpf_program__attach_kprobe(libbpf_ruby_program-&gt;bpf_program, retprobe, StringValueCStr(func_name));
-  long err = libbpf_get_error(link);
+  nogvl_attach_kprobe_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
+    .retprobe = retprobe,
+    .func_name = StringValueCStr(func_name)
+  };
+  rb_nogvl(nogvl_bpf_program__attach_kprobe, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_kprobe failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -538,25 +552,26 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
       <pre class="lines">
 
 
-322
-323
-324
-325
-326
-327
-328
-329
-330
-331
-332
-333
-334
-335
-336
-337</pre>
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 322</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 477</span>
 
 static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -566,13 +581,14 @@ static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
   if (perf_fd &lt; 0) {
     rb_raise(rb_eRuntimeError, &quot;dup failed: %s&quot;, strerror(errno));
   }
-  struct bpf_link *link = bpf_program__attach_perf_event(libbpf_ruby_program-&gt;bpf_program, perf_fd);
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = perf_fd };
+  rb_nogvl(nogvl_bpf_program__attach_perf_event, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     close(perf_fd);
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_perf_event failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -594,31 +610,39 @@ static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
       <pre class="lines">
 
 
-298
-299
-300
-301
-302
-303
-304
-305
-306
-307
-308</pre>
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 298</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 448</span>
 
 static VALUE rb_cProgram_attach_raw_tracepoint(VALUE self, VALUE name) {
   libbpf_ruby_program_t *libbpf_ruby_program;
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
-  struct bpf_link *link = bpf_program__attach_raw_tracepoint(libbpf_ruby_program-&gt;bpf_program, StringValueCStr(name));
-  long err = libbpf_get_error(link);
+  nogvl_attach_raw_tracepoint_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
+    .name = StringValueCStr(name)
+  };
+  rb_nogvl(nogvl_bpf_program__attach_raw_tracepoint, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_raw_tracepoint failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -640,31 +664,33 @@ static VALUE rb_cProgram_attach_raw_tracepoint(VALUE self, VALUE name) {
       <pre class="lines">
 
 
-222
-223
-224
-225
-226
-227
-228
-229
-230
-231
-232</pre>
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 222</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 354</span>
 
 static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
   libbpf_ruby_program_t *libbpf_ruby_program;
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
-  struct bpf_link *link = bpf_program__attach_tcx(libbpf_ruby_program-&gt;bpf_program, NUM2INT(ifindex), NULL);
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = NUM2INT(ifindex) };
+  rb_nogvl(nogvl_bpf_program__attach_tcx, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_tcx failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -686,31 +712,41 @@ static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
       <pre class="lines">
 
 
-286
-287
-288
-289
-290
-291
-292
-293
-294
-295
-296</pre>
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 286</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 431</span>
 
 static VALUE rb_cProgram_attach_tracepoint(VALUE self, VALUE category, VALUE name) {
   libbpf_ruby_program_t *libbpf_ruby_program;
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
-  struct bpf_link *link = bpf_program__attach_tracepoint(libbpf_ruby_program-&gt;bpf_program, StringValueCStr(category), StringValueCStr(name));
-  long err = libbpf_get_error(link);
+  nogvl_attach_tracepoint_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
+    .category = StringValueCStr(category),
+    .name = StringValueCStr(name)
+  };
+  rb_nogvl(nogvl_bpf_program__attach_tracepoint, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_tracepoint failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -732,39 +768,46 @@ static VALUE rb_cProgram_attach_tracepoint(VALUE self, VALUE category, VALUE nam
       <pre class="lines">
 
 
-255
-256
-257
-258
-259
-260
-261
-262
-263
-264
-265
-266
-267
-268
-269
-270
-271
-272
-273
-274
-275
-276
-277
-278
-279
-280
-281
-282
-283
-284</pre>
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 255</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 393</span>
 
 static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
   VALUE binary_path, kwargs;
@@ -789,12 +832,19 @@ static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
   LIBBPF_OPTS(bpf_uprobe_opts, uopts, .retprobe = retprobe, .func_name = func_name);
-  struct bpf_link *link = bpf_program__attach_uprobe_opts(libbpf_ruby_program-&gt;bpf_program, pid, StringValueCStr(binary_path), offset, &amp;uopts);
-  long err = libbpf_get_error(link);
+  nogvl_attach_uprobe_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
+    .pid = pid,
+    .binary_path = StringValueCStr(binary_path),
+    .offset = offset,
+    .opts = &amp;uopts
+  };
+  rb_nogvl(nogvl_bpf_program__attach_uprobe_opts, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_uprobe_opts failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -816,31 +866,33 @@ static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
       <pre class="lines">
 
 
-209
-210
-211
-212
-213
-214
-215
-216
-217
-218
-219</pre>
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 209</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 340</span>
 
 static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
   libbpf_ruby_program_t *libbpf_ruby_program;
   TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
 
-  struct bpf_link *link = bpf_program__attach_xdp(libbpf_ruby_program-&gt;bpf_program, NUM2INT(ifindex));
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = NUM2INT(ifindex) };
+  rb_nogvl(nogvl_bpf_program__attach_xdp, &amp;ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_xdp failed: %s&quot;, strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }</pre>
     </td>
   </tr>
@@ -862,14 +914,14 @@ static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
       <pre class="lines">
 
 
-185
-186
-187
-188
-189</pre>
+315
+316
+317
+318
+319</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 185</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 315</span>
 
 static VALUE rb_cProgram_fd(VALUE self) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -896,14 +948,14 @@ static VALUE rb_cProgram_fd(VALUE self) {
       <pre class="lines">
 
 
-191
-192
-193
-194
-195</pre>
+321
+322
+323
+324
+325</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 191</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 321</span>
 
 static VALUE rb_cProgram_name(VALUE self) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -920,7 +972,7 @@ static VALUE rb_cProgram_name(VALUE self) {
 </div>
 
       <div id="footer">
-  Generated on Sat Aug  8 23:30:37 2026 by
+  Generated on Sat Aug  8 23:35:19 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.6).
 </div>
