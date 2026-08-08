@@ -25,4 +25,9 @@ int test_tracepoint_program(void *ctx) {
   return 0;
 }
 
+SEC("xdp")
+int test_xdp_program(struct xdp_md *ctx) {
+  return XDP_PASS;
+}
+
 char _license[] SEC("license") = "GPL";

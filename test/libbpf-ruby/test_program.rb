@@ -18,6 +18,13 @@ class TestProgram < Minitest::Test
     assert_kind_of Integer, @program.fd
   end
 
+  def test_fd_raises_for_closed_object
+    @object.close
+    assert_raises RuntimeError do
+      @program.fd
+    end
+  end
+
   def test_name
     assert_equal "test_tracepoint_program", @program.name
   end
@@ -29,10 +36,11 @@ class TestProgram < Minitest::Test
     link&.detach
   end
 
-  def test_fd_raises_for_closed_object
-    @object.close
-    assert_raises RuntimeError do
-      @program.fd
-    end
+  def test_attach_xdp
+    program = @object.program("test_xdp_program")
+    link = program.attach_xdp(LOOPBACK_IFINDEX)
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
   end
 end
