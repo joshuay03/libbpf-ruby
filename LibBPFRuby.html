@@ -6,7 +6,7 @@
 <title>
   Module: LibBPFRuby
   
-    &mdash; Documentation by YARD 0.9.44
+    &mdash; Documentation by YARD 0.9.45
   
 </title>
 
@@ -94,7 +94,7 @@
     
   
     
-      <strong class="classes">Classes:</strong> <span class='object_link'><a href="LibBPFRuby/Object.html" title="LibBPFRuby::Object (class)">Object</a></span>
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="LibBPFRuby/Link.html" title="LibBPFRuby::Link (class)">Link</a></span>, <span class='object_link'><a href="LibBPFRuby/Object.html" title="LibBPFRuby::Object (class)">Object</a></span>, <span class='object_link'><a href="LibBPFRuby/Program.html" title="LibBPFRuby::Program (class)">Program</a></span>
     
   
 </p>
@@ -264,17 +264,17 @@
       <pre class="lines">
 
 
-125
-126
-127
-128
-129
-130
-131
-132</pre>
+299
+300
+301
+302
+303
+304
+305
+306</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 125</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 299</span>
 
 static VALUE rb_mLibBPFRuby_attach_reuseport(VALUE self, VALUE socket, VALUE program_fd) {
   int sock_fd = rb_io_descriptor(socket);
@@ -304,18 +304,18 @@ static VALUE rb_mLibBPFRuby_attach_reuseport(VALUE self, VALUE socket, VALUE pro
       <pre class="lines">
 
 
-115
-116
-117
-118
-119
-120
-121
-122
-123</pre>
+289
+290
+291
+292
+293
+294
+295
+296
+297</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 115</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 289</span>
 
 static VALUE rb_mLibBPFRuby_map_lookup(VALUE self, VALUE map_fd, VALUE key, VALUE value_size) {
   Check_Type(key, T_STRING);
@@ -346,17 +346,17 @@ static VALUE rb_mLibBPFRuby_map_lookup(VALUE self, VALUE map_fd, VALUE key, VALU
       <pre class="lines">
 
 
-97
-98
-99
-100
-101
-102
-103
-104</pre>
+271
+272
+273
+274
+275
+276
+277
+278</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 97</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 271</span>
 
 static VALUE rb_mLibBPFRuby_map_update(VALUE self, VALUE map_fd, VALUE key, VALUE value) {
   Check_Type(key, T_STRING);
@@ -386,17 +386,17 @@ static VALUE rb_mLibBPFRuby_map_update(VALUE self, VALUE map_fd, VALUE key, VALU
       <pre class="lines">
 
 
-106
-107
-108
-109
-110
-111
-112
-113</pre>
+280
+281
+282
+283
+284
+285
+286
+287</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 106</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 280</span>
 
 static VALUE rb_mLibBPFRuby_sockmap_update(VALUE self, VALUE map_fd, VALUE key, VALUE socket) {
   Check_Type(key, T_STRING);
@@ -416,9 +416,9 @@ static VALUE rb_mLibBPFRuby_sockmap_update(VALUE self, VALUE map_fd, VALUE key, 
 </div>
 
       <div id="footer">
-  Generated on Sun Jul  5 01:33:45 2026 by
+  Generated on Sat Aug  8 23:09:35 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.44 (ruby-4.0.5).
+  0.9.45 (ruby-4.0.6).
 </div>
 
     </div>

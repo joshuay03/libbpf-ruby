@@ -6,7 +6,7 @@
 <title>
   Class: LibBPFRuby::Object
   
-    &mdash; Documentation by YARD 0.9.44
+    &mdash; Documentation by YARD 0.9.45
   
 </title>
 
@@ -188,6 +188,28 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#program-instance_method" title="#program (instance method)">#<strong>program</strong>(name)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#program_fd-instance_method" title="#program_fd (instance method)">#<strong>program_fd</strong>(name)  &#x21d2; Object </a>
     
 
@@ -229,27 +251,27 @@
       <pre class="lines">
 
 
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61</pre>
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 44</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 117</span>
 
 static VALUE rb_cObject_initialize(VALUE self, VALUE path) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -296,18 +318,18 @@ static VALUE rb_cObject_initialize(VALUE self, VALUE path) {
       <pre class="lines">
 
 
-87
-88
-89
-90
-91
-92
-93
-94
-95</pre>
+172
+173
+174
+175
+176
+177
+178
+179
+180</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 87</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 172</span>
 
 static VALUE rb_cObject_close(VALUE self) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -338,20 +360,20 @@ static VALUE rb_cObject_close(VALUE self) {
       <pre class="lines">
 
 
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85</pre>
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 75</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 160</span>
 
 static VALUE rb_cObject_map_fd(VALUE self, VALUE name) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -363,6 +385,52 @@ static VALUE rb_cObject_map_fd(VALUE self, VALUE name) {
     rb_raise(rb_eRuntimeError, &quot;map %s not found&quot;, name_str);
   }
   return INT2NUM(fd);
+}</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="program-instance_method">
+  
+    #<strong>program</strong>(name)  &#x21d2; <tt><span class='object_link'><a href="" title="LibBPFRuby::Object (class)">Object</a></span></tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 136</span>
+
+static VALUE rb_cObject_program(VALUE self, VALUE name) {
+  libbpf_ruby_object_t *libbpf_ruby_object;
+  TypedData_Get_Struct(self, libbpf_ruby_object_t, &amp;libbpf_ruby_object_type, libbpf_ruby_object);
+  const char *name_str = StringValueCStr(name);
+
+  struct bpf_program *program = bpf_object__find_program_by_name(libbpf_ruby_object-&gt;bpf_object, name_str);
+  if (!program) {
+    rb_raise(rb_eRuntimeError, &quot;program %s not found&quot;, name_str);
+  }
+  return libbpf_ruby_program_wrap(self, program);
 }</pre>
     </td>
   </tr>
@@ -384,20 +452,20 @@ static VALUE rb_cObject_map_fd(VALUE self, VALUE name) {
       <pre class="lines">
 
 
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73</pre>
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 63</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 148</span>
 
 static VALUE rb_cObject_program_fd(VALUE self, VALUE name) {
   libbpf_ruby_object_t *libbpf_ruby_object;
@@ -420,9 +488,9 @@ static VALUE rb_cObject_program_fd(VALUE self, VALUE name) {
 </div>
 
       <div id="footer">
-  Generated on Sun Jul  5 01:33:45 2026 by
+  Generated on Sat Aug  8 23:09:35 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.44 (ruby-4.0.5).
+  0.9.45 (ruby-4.0.6).
 </div>
 
     </div>
