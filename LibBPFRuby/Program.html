@@ -142,6 +142,28 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#attach_cgroup-instance_method" title="#attach_cgroup (instance method)">#<strong>attach_cgroup</strong>(cgroup)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#attach_kprobe-instance_method" title="#attach_kprobe (instance method)">#<strong>attach_kprobe</strong>(*args)  &#x21d2; Object </a>
     
 
@@ -363,6 +385,52 @@ static VALUE rb_cProgram_attach(VALUE self) {
   long err = libbpf_get_error(link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach failed: %s&quot;, strerror(-err));
+  }
+  return libbpf_ruby_link_wrap(self, link);
+}</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="attach_cgroup-instance_method">
+  
+    #<strong>attach_cgroup</strong>(cgroup)  &#x21d2; <tt><span class='object_link'><a href="Object.html" title="LibBPFRuby::Object (class)">Object</a></span></tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 310</span>
+
+static VALUE rb_cProgram_attach_cgroup(VALUE self, VALUE cgroup) {
+  libbpf_ruby_program_t *libbpf_ruby_program;
+  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
+
+  struct bpf_link *link = bpf_program__attach_cgroup(libbpf_ruby_program-&gt;bpf_program, rb_io_descriptor(cgroup));
+  long err = libbpf_get_error(link);
+  if (err) {
+    rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_cgroup failed: %s&quot;, strerror(-err));
   }
   return libbpf_ruby_link_wrap(self, link);
 }</pre>
@@ -774,7 +842,7 @@ static VALUE rb_cProgram_name(VALUE self) {
 </div>
 
       <div id="footer">
-  Generated on Sat Aug  8 23:21:05 2026 by
+  Generated on Sat Aug  8 23:22:26 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.6).
 </div>
