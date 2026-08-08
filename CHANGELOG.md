@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Add `Program#attach_perf_event`
 - Add `Program#attach_cgroup`
 - Add `Program#attach_raw_tracepoint`
 - Add `Program#attach_tracepoint`

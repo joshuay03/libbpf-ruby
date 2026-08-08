@@ -55,4 +55,9 @@ int test_cgroup_program(struct bpf_sock *sk) {
   return 1;
 }
 
+SEC("perf_event")
+int test_perf_event_program(struct bpf_perf_event_data *ctx) {
+  return 0;
+}
+
 char _license[] SEC("license") = "GPL";

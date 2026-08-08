@@ -2,8 +2,17 @@
 
 require "test_helper"
 
+require "etc"
+require "fiddle"
+
 class TestProgram < Minitest::Test
   parallelize_me!
+
+  SYS_PERF_EVENT_OPEN = case Etc.uname[:machine]
+                       when "x86_64" then 298
+                       when "aarch64" then 241
+                       end
+  private_constant :SYS_PERF_EVENT_OPEN
 
   def setup
     @object = LibBPFRuby::Object.new(BPF_OBJECT_PATH)
@@ -103,5 +112,30 @@ class TestProgram < Minitest::Test
   ensure
     link&.detach
     cgroup&.close
+  end
+
+  def test_attach_perf_event
+    skip "unsupported architecture: #{Etc.uname[:machine]}" unless SYS_PERF_EVENT_OPEN
+
+    program = @object.program("test_perf_event_program")
+    perf = open_cpu_clock_perf_event
+    link = program.attach_perf_event(perf)
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+    perf&.close
+  end
+
+  private
+
+  def open_cpu_clock_perf_event
+    attr = [1, 128, 0].pack("LLQ") + ("\0" * 112)
+    fd = Fiddle::Function.new(
+      Fiddle::Handle::DEFAULT["syscall"],
+      [Fiddle::TYPE_LONG, Fiddle::TYPE_VOIDP, Fiddle::TYPE_INT, Fiddle::TYPE_INT, Fiddle::TYPE_INT, Fiddle::TYPE_ULONG],
+      Fiddle::TYPE_LONG
+    ).call(SYS_PERF_EVENT_OPEN, attr, 0, -1, -1, 0)
+    raise "perf_event_open failed: errno #{Fiddle.last_error}" if fd < 0
+    IO.for_fd(fd)
   end
 end

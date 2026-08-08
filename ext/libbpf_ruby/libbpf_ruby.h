@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #ifndef SO_ATTACH_REUSEPORT_EBPF
 #define SO_ATTACH_REUSEPORT_EBPF 52
