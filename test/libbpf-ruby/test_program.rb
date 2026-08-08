@@ -94,4 +94,14 @@ class TestProgram < Minitest::Test
   ensure
     link&.detach
   end
+
+  def test_attach_cgroup
+    program = @object.program("test_cgroup_program")
+    cgroup = File.open("/sys/fs/cgroup")
+    link = program.attach_cgroup(cgroup)
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+    cgroup&.close
+  end
 end

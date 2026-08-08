@@ -50,4 +50,9 @@ int test_raw_tracepoint_program(void *ctx) {
   return 0;
 }
 
+SEC("cgroup/sock_create")
+int test_cgroup_program(struct bpf_sock *sk) {
+  return 1;
+}
+
 char _license[] SEC("license") = "GPL";
