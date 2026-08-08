@@ -274,17 +274,17 @@ frozen_string_literal: true</p>
       <pre class="lines">
 
 
-369
-370
-371
-372
-373
-374
-375
-376</pre>
+386
+387
+388
+389
+390
+391
+392
+393</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 369</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 386</span>
 
 static VALUE rb_mLibBPFRuby_attach_reuseport(VALUE self, VALUE socket, VALUE program_fd) {
   int sock_fd = rb_io_descriptor(socket);
@@ -314,18 +314,18 @@ static VALUE rb_mLibBPFRuby_attach_reuseport(VALUE self, VALUE socket, VALUE pro
       <pre class="lines">
 
 
-359
-360
-361
-362
-363
-364
-365
-366
-367</pre>
+376
+377
+378
+379
+380
+381
+382
+383
+384</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 359</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 376</span>
 
 static VALUE rb_mLibBPFRuby_map_lookup(VALUE self, VALUE map_fd, VALUE key, VALUE value_size) {
   Check_Type(key, T_STRING);
@@ -356,17 +356,17 @@ static VALUE rb_mLibBPFRuby_map_lookup(VALUE self, VALUE map_fd, VALUE key, VALU
       <pre class="lines">
 
 
-341
-342
-343
-344
-345
-346
-347
-348</pre>
+358
+359
+360
+361
+362
+363
+364
+365</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 341</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 358</span>
 
 static VALUE rb_mLibBPFRuby_map_update(VALUE self, VALUE map_fd, VALUE key, VALUE value) {
   Check_Type(key, T_STRING);
@@ -396,17 +396,17 @@ static VALUE rb_mLibBPFRuby_map_update(VALUE self, VALUE map_fd, VALUE key, VALU
       <pre class="lines">
 
 
-350
-351
-352
-353
-354
-355
-356
-357</pre>
+367
+368
+369
+370
+371
+372
+373
+374</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 350</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 367</span>
 
 static VALUE rb_mLibBPFRuby_sockmap_update(VALUE self, VALUE map_fd, VALUE key, VALUE socket) {
   Check_Type(key, T_STRING);
@@ -426,7 +426,7 @@ static VALUE rb_mLibBPFRuby_sockmap_update(VALUE self, VALUE map_fd, VALUE key, 
 </div>
 
       <div id="footer">
-  Generated on Sat Aug  8 23:25:52 2026 by
+  Generated on Sat Aug  8 23:29:04 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.6).
 </div>
