@@ -30,4 +30,9 @@ int test_xdp_program(struct xdp_md *ctx) {
   return XDP_PASS;
 }
 
+SEC("tcx/ingress")
+int test_tcx_program(struct __sk_buff *skb) {
+  return 0;
+}
+
 char _license[] SEC("license") = "GPL";

@@ -216,6 +216,17 @@ static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
   return libbpf_ruby_link_wrap(self, link);
 }
 
+#ifdef HAVE_BPF_PROGRAM__ATTACH_TCX
+static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
+  struct bpf_link *link = bpf_program__attach_tcx(libbpf_ruby_program_bpf(self), NUM2INT(ifindex), NULL);
+  long err = libbpf_get_error(link);
+  if (err) {
+    rb_raise(rb_eRuntimeError, "bpf_program__attach_tcx failed: %s", strerror(-err));
+  }
+  return libbpf_ruby_link_wrap(self, link);
+}
+#endif
+
 static VALUE rb_cLink_fd(VALUE self) {
   libbpf_ruby_link_t *libbpf_ruby_link;
   TypedData_Get_Struct(self, libbpf_ruby_link_t, &libbpf_ruby_link_type, libbpf_ruby_link);
@@ -296,6 +307,9 @@ RUBY_FUNC_EXPORTED void Init_libbpf_ruby(void) {
   rb_define_method(rb_cLibBPFRubyProgram, "name", rb_cProgram_name, 0);
   rb_define_method(rb_cLibBPFRubyProgram, "attach", rb_cProgram_attach, 0);
   rb_define_method(rb_cLibBPFRubyProgram, "attach_xdp", rb_cProgram_attach_xdp, 1);
+#ifdef HAVE_BPF_PROGRAM__ATTACH_TCX
+  rb_define_method(rb_cLibBPFRubyProgram, "attach_tcx", rb_cProgram_attach_tcx, 1);
+#endif
 
   rb_undef_alloc_func(rb_cLibBPFRubyLink);
   rb_define_method(rb_cLibBPFRubyLink, "fd", rb_cLink_fd, 0);

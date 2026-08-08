@@ -43,4 +43,14 @@ class TestProgram < Minitest::Test
   ensure
     link&.detach
   end
+
+  def test_attach_tcx
+    skip "bpf_program__attach_tcx unavailable" unless LibBPFRuby::Program.method_defined?(:attach_tcx)
+
+    program = @object.program("test_tcx_program")
+    link = program.attach_tcx(LOOPBACK_IFINDEX)
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+  end
 end
