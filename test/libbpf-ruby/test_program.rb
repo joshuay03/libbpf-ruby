@@ -86,4 +86,12 @@ class TestProgram < Minitest::Test
   ensure
     link&.detach
   end
+
+  def test_attach_raw_tracepoint
+    program = @object.program("test_raw_tracepoint_program")
+    link = program.attach_raw_tracepoint("sys_enter")
+    assert_kind_of LibBPFRuby::Link, link
+  ensure
+    link&.detach
+  end
 end

@@ -45,4 +45,9 @@ int test_uprobe_program(struct pt_regs *ctx) {
   return 0;
 }
 
+SEC("raw_tracepoint/sys_enter")
+int test_raw_tracepoint_program(void *ctx) {
+  return 0;
+}
+
 char _license[] SEC("license") = "GPL";
