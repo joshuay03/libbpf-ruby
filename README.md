@@ -33,13 +33,21 @@ require "socket"
 
 object = LibBPFRuby::Object.new("my_program.bpf.o")
 
-program_fd = object.program_fd("my_program")
+# Map updates and reuseport-based load balancing:
 map_fd = object.map_fd("my_map")
-
 LibBPFRuby.map_update(map_fd, [0].pack("L"), [42].pack("L"))
 
 listening_socket = TCPServer.new(3000)
-LibBPFRuby.attach_reuseport(listening_socket, program_fd)
+LibBPFRuby.attach_reuseport(listening_socket, object.program_fd("my_reuseport_program"))
+
+# First-class Programs and Links for every other hook:
+lo_ifindex = File.read("/sys/class/net/lo/ifindex").to_i
+xdp_link = object.program("my_xdp_program").attach_xdp(lo_ifindex)
+kprobe_link = object.program("my_kprobe_program").attach_kprobe("do_nanosleep")
+tp_link = object.program("my_tracepoint_program").attach_tracepoint("syscalls", "sys_enter_read")
+
+# Detach explicitly, or let GC destroy the link:
+xdp_link.detach
 ```
 
 ## Development
