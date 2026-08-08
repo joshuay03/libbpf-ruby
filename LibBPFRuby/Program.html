@@ -186,6 +186,28 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#attach_uprobe-instance_method" title="#attach_uprobe (instance method)">#<strong>attach_uprobe</strong>(*args)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#attach_xdp-instance_method" title="#attach_xdp (instance method)">#<strong>attach_xdp</strong>(ifindex)  &#x21d2; Object </a>
     
 
@@ -274,9 +296,6 @@
       <pre class="lines">
 
 
-194
-195
-196
 197
 198
 199
@@ -284,10 +303,13 @@
 201
 202
 203
-204</pre>
+204
+205
+206
+207</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 194</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 197</span>
 
 static VALUE rb_cProgram_attach(VALUE self) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -320,9 +342,6 @@ static VALUE rb_cProgram_attach(VALUE self) {
       <pre class="lines">
 
 
-232
-233
-234
 235
 236
 237
@@ -338,10 +357,13 @@ static VALUE rb_cProgram_attach(VALUE self) {
 247
 248
 249
-250</pre>
+250
+251
+252
+253</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 232</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 235</span>
 
 static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
   VALUE func_name, kwargs;
@@ -382,9 +404,6 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
       <pre class="lines">
 
 
-219
-220
-221
 222
 223
 224
@@ -392,10 +411,13 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
 226
 227
 228
-229</pre>
+229
+230
+231
+232</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 219</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 222</span>
 
 static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -405,6 +427,90 @@ static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
   long err = libbpf_get_error(link);
   if (err) {
     rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_tcx failed: %s&quot;, strerror(-err));
+  }
+  return libbpf_ruby_link_wrap(self, link);
+}</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="attach_uprobe-instance_method">
+  
+    #<strong>attach_uprobe</strong>(*args)  &#x21d2; <tt><span class='object_link'><a href="Object.html" title="LibBPFRuby::Object (class)">Object</a></span></tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 255</span>
+
+static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
+  VALUE binary_path, kwargs;
+  rb_scan_args(argc, argv, &quot;1:&quot;, &amp;binary_path, &amp;kwargs);
+  const char *func_name = NULL;
+  size_t offset = 0;
+  pid_t pid = -1;
+  bool retprobe = false;
+  if (!NIL_P(kwargs)) {
+    VALUE value;
+    value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_func_name), Qundef);
+    if (value != Qundef) func_name = StringValueCStr(value);
+    value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_offset), Qundef);
+    if (value != Qundef) offset = NUM2SIZET(value);
+    value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_pid), Qundef);
+    if (value != Qundef) pid = NUM2INT(value);
+    value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_retprobe), Qundef);
+    if (value != Qundef) retprobe = RTEST(value);
+  }
+
+  libbpf_ruby_program_t *libbpf_ruby_program;
+  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
+
+  LIBBPF_OPTS(bpf_uprobe_opts, uopts, .retprobe = retprobe, .func_name = func_name);
+  struct bpf_link *link = bpf_program__attach_uprobe_opts(libbpf_ruby_program-&gt;bpf_program, pid, StringValueCStr(binary_path), offset, &amp;uopts);
+  long err = libbpf_get_error(link);
+  if (err) {
+    rb_raise(rb_eRuntimeError, &quot;bpf_program__attach_uprobe_opts failed: %s&quot;, strerror(-err));
   }
   return libbpf_ruby_link_wrap(self, link);
 }</pre>
@@ -428,9 +534,6 @@ static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
       <pre class="lines">
 
 
-206
-207
-208
 209
 210
 211
@@ -438,10 +541,13 @@ static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
 213
 214
 215
-216</pre>
+216
+217
+218
+219</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 206</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 209</span>
 
 static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -474,14 +580,14 @@ static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
       <pre class="lines">
 
 
-182
-183
-184
 185
-186</pre>
+186
+187
+188
+189</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 182</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 185</span>
 
 static VALUE rb_cProgram_fd(VALUE self) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -508,14 +614,14 @@ static VALUE rb_cProgram_fd(VALUE self) {
       <pre class="lines">
 
 
-188
-189
-190
 191
-192</pre>
+192
+193
+194
+195</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 188</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 191</span>
 
 static VALUE rb_cProgram_name(VALUE self) {
   libbpf_ruby_program_t *libbpf_ruby_program;
@@ -532,7 +638,7 @@ static VALUE rb_cProgram_name(VALUE self) {
 </div>
 
       <div id="footer">
-  Generated on Sat Aug  8 23:14:17 2026 by
+  Generated on Sat Aug  8 23:16:31 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.6).
 </div>
