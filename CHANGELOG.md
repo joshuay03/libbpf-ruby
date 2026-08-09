@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-09
+
 - Release the GVL during blocking libbpf calls
 - Add `Program#attach_perf_event`
 - Add `Program#attach_cgroup`
