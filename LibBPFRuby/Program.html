@@ -384,27 +384,21 @@
       <pre class="lines">
 
 
-327
-328
-329
-330
-331
-332
-333
-334
-335
-336
 337
-338</pre>
+338
+339
+340
+341
+342
+343
+344
+345</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 327</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 337</span>
 
 static VALUE rb_cProgram_attach(VALUE self) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-
-  nogvl_attach_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program };
+  nogvl_attach_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self) };
   rb_nogvl(nogvl_bpf_program__attach, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
@@ -432,27 +426,21 @@ static VALUE rb_cProgram_attach(VALUE self) {
       <pre class="lines">
 
 
-464
-465
-466
-467
-468
-469
-470
 471
 472
 473
 474
-475</pre>
+475
+476
+477
+478
+479</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 464</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 471</span>
 
 static VALUE rb_cProgram_attach_cgroup(VALUE self, VALUE cgroup) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-
-  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = rb_io_descriptor(cgroup) };
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self), .int_arg = rb_io_descriptor(cgroup) };
   rb_nogvl(nogvl_bpf_program__attach_cgroup, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
@@ -480,7 +468,6 @@ static VALUE rb_cProgram_attach_cgroup(VALUE self, VALUE cgroup) {
       <pre class="lines">
 
 
-368
 369
 370
 371
@@ -506,7 +493,7 @@ static VALUE rb_cProgram_attach_cgroup(VALUE self, VALUE cgroup) {
 391</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 368</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 369</span>
 
 static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
   VALUE func_name, kwargs;
@@ -516,14 +503,13 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
     VALUE value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_retprobe), Qundef);
     if (value != Qundef) retprobe = RTEST(value);
   }
-
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
+  StringValueCStr(func_name);
+  VALUE frozen_func_name = rb_str_new_frozen(func_name);
 
   nogvl_attach_kprobe_ctx_t ctx = {
-    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
+    .bpf_program = libbpf_ruby_program_bpf(self),
     .retprobe = retprobe,
-    .func_name = StringValueCStr(func_name)
+    .func_name = RSTRING_PTR(frozen_func_name)
   };
   rb_nogvl(nogvl_bpf_program__attach_kprobe, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
@@ -552,10 +538,6 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
       <pre class="lines">
 
 
-477
-478
-479
-480
 481
 482
 483
@@ -568,20 +550,20 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
 490
 491
 492
-493</pre>
+493
+494
+495</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 477</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 481</span>
 
 static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-
+  struct bpf_program *program = libbpf_ruby_program_bpf(self);
   int perf_fd = dup(rb_io_descriptor(perf_event));
   if (perf_fd &lt; 0) {
     rb_raise(rb_eRuntimeError, &quot;dup failed: %s&quot;, strerror(errno));
   }
-  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = perf_fd };
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = program, .int_arg = perf_fd };
   rb_nogvl(nogvl_bpf_program__attach_perf_event, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
@@ -610,13 +592,6 @@ static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
       <pre class="lines">
 
 
-448
-449
-450
-451
-452
-453
-454
 455
 456
 457
@@ -624,18 +599,25 @@ static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
 459
 460
 461
-462</pre>
+462
+463
+464
+465
+466
+467
+468
+469</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 448</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 455</span>
 
 static VALUE rb_cProgram_attach_raw_tracepoint(VALUE self, VALUE name) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
+  StringValueCStr(name);
+  VALUE frozen_name = rb_str_new_frozen(name);
 
   nogvl_attach_raw_tracepoint_ctx_t ctx = {
-    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
-    .name = StringValueCStr(name)
+    .bpf_program = libbpf_ruby_program_bpf(self),
+    .name = RSTRING_PTR(frozen_name)
   };
   rb_nogvl(nogvl_bpf_program__attach_raw_tracepoint, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
@@ -664,10 +646,6 @@ static VALUE rb_cProgram_attach_raw_tracepoint(VALUE self, VALUE name) {
       <pre class="lines">
 
 
-354
-355
-356
-357
 358
 359
 360
@@ -675,16 +653,14 @@ static VALUE rb_cProgram_attach_raw_tracepoint(VALUE self, VALUE name) {
 362
 363
 364
-365</pre>
+365
+366</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 354</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 358</span>
 
 static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-
-  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = NUM2INT(ifindex) };
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self), .int_arg = NUM2INT(ifindex) };
   rb_nogvl(nogvl_bpf_program__attach_tcx, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
@@ -712,11 +688,6 @@ static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
       <pre class="lines">
 
 
-431
-432
-433
-434
-435
 436
 437
 438
@@ -727,19 +698,28 @@ static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
 443
 444
 445
-446</pre>
+446
+447
+448
+449
+450
+451
+452
+453</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 431</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 436</span>
 
 static VALUE rb_cProgram_attach_tracepoint(VALUE self, VALUE category, VALUE name) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
+  StringValueCStr(category);
+  StringValueCStr(name);
+  VALUE frozen_category = rb_str_new_frozen(category);
+  VALUE frozen_name = rb_str_new_frozen(name);
 
   nogvl_attach_tracepoint_ctx_t ctx = {
-    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
-    .category = StringValueCStr(category),
-    .name = StringValueCStr(name)
+    .bpf_program = libbpf_ruby_program_bpf(self),
+    .category = RSTRING_PTR(frozen_category),
+    .name = RSTRING_PTR(frozen_name)
   };
   rb_nogvl(nogvl_bpf_program__attach_tracepoint, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
@@ -804,7 +784,12 @@ static VALUE rb_cProgram_attach_tracepoint(VALUE self, VALUE category, VALUE nam
 426
 427
 428
-429</pre>
+429
+430
+431
+432
+433
+434</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 393</span>
@@ -812,14 +797,17 @@ static VALUE rb_cProgram_attach_tracepoint(VALUE self, VALUE category, VALUE nam
 static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
   VALUE binary_path, kwargs;
   rb_scan_args(argc, argv, &quot;1:&quot;, &amp;binary_path, &amp;kwargs);
-  const char *func_name = NULL;
+  VALUE frozen_func_name = Qnil;
   size_t offset = 0;
   pid_t pid = -1;
   bool retprobe = false;
   if (!NIL_P(kwargs)) {
     VALUE value;
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_func_name), Qundef);
-    if (value != Qundef) func_name = StringValueCStr(value);
+    if (value != Qundef) {
+      StringValueCStr(value);
+      frozen_func_name = rb_str_new_frozen(value);
+    }
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_offset), Qundef);
     if (value != Qundef) offset = NUM2SIZET(value);
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_pid), Qundef);
@@ -827,15 +815,17 @@ static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_retprobe), Qundef);
     if (value != Qundef) retprobe = RTEST(value);
   }
+  StringValueCStr(binary_path);
+  VALUE frozen_binary_path = rb_str_new_frozen(binary_path);
 
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-
-  LIBBPF_OPTS(bpf_uprobe_opts, uopts, .retprobe = retprobe, .func_name = func_name);
+  LIBBPF_OPTS(bpf_uprobe_opts, uopts,
+    .retprobe = retprobe,
+    .func_name = NIL_P(frozen_func_name) ? NULL : RSTRING_PTR(frozen_func_name)
+  );
   nogvl_attach_uprobe_ctx_t ctx = {
-    .bpf_program = libbpf_ruby_program-&gt;bpf_program,
+    .bpf_program = libbpf_ruby_program_bpf(self),
     .pid = pid,
-    .binary_path = StringValueCStr(binary_path),
+    .binary_path = RSTRING_PTR(frozen_binary_path),
     .offset = offset,
     .opts = &amp;uopts
   };
@@ -866,27 +856,21 @@ static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
       <pre class="lines">
 
 
-340
-341
-342
-343
-344
-345
-346
 347
 348
 349
 350
-351</pre>
+351
+352
+353
+354
+355</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 340</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 347</span>
 
 static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-
-  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program-&gt;bpf_program, .int_arg = NUM2INT(ifindex) };
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self), .int_arg = NUM2INT(ifindex) };
   rb_nogvl(nogvl_bpf_program__attach_xdp, &amp;ctx, NULL, NULL, 0);
   long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
@@ -914,20 +898,16 @@ static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
       <pre class="lines">
 
 
-315
-316
-317
-318
-319</pre>
+329
+330
+331</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 315</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 329</span>
 
-static VALUE rb_cProgram_fd(VALUE self) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-  return INT2NUM(bpf_program__fd(libbpf_ruby_program-&gt;bpf_program));
-}</pre>
+<span class='id identifier rubyid_static'>static</span> <span class='const'>VALUE</span> <span class='id identifier rubyid_rb_cProgram_fd'>rb_cProgram_fd</span><span class='lparen'>(</span><span class='const'>VALUE</span> <span class='kw'>self</span><span class='rparen'>)</span> <span class='lbrace'>{</span>
+  <span class='kw'>return</span> <span class='const'>INT2NUM</span><span class='lparen'>(</span><span class='id identifier rubyid_bpf_program__fd'>bpf_program__fd</span><span class='lparen'>(</span><span class='id identifier rubyid_libbpf_ruby_program_bpf'>libbpf_ruby_program_bpf</span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='semicolon'>;</span>
+<span class='rbrace'>}</span></pre>
     </td>
   </tr>
 </table>
@@ -948,20 +928,16 @@ static VALUE rb_cProgram_fd(VALUE self) {
       <pre class="lines">
 
 
-321
-322
-323
-324
-325</pre>
+333
+334
+335</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 321</span>
+      <pre class="code"><span class="info file"># File 'ext/libbpf_ruby/libbpf_ruby.c', line 333</span>
 
-static VALUE rb_cProgram_name(VALUE self) {
-  libbpf_ruby_program_t *libbpf_ruby_program;
-  TypedData_Get_Struct(self, libbpf_ruby_program_t, &amp;libbpf_ruby_program_type, libbpf_ruby_program);
-  return rb_str_new_cstr(bpf_program__name(libbpf_ruby_program-&gt;bpf_program));
-}</pre>
+<span class='id identifier rubyid_static'>static</span> <span class='const'>VALUE</span> <span class='id identifier rubyid_rb_cProgram_name'>rb_cProgram_name</span><span class='lparen'>(</span><span class='const'>VALUE</span> <span class='kw'>self</span><span class='rparen'>)</span> <span class='lbrace'>{</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_rb_str_new_cstr'>rb_str_new_cstr</span><span class='lparen'>(</span><span class='id identifier rubyid_bpf_program__name'>bpf_program__name</span><span class='lparen'>(</span><span class='id identifier rubyid_libbpf_ruby_program_bpf'>libbpf_ruby_program_bpf</span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='semicolon'>;</span>
+<span class='rbrace'>}</span></pre>
     </td>
   </tr>
 </table>
@@ -972,7 +948,7 @@ static VALUE rb_cProgram_name(VALUE self) {
 </div>
 
       <div id="footer">
-  Generated on Sat Aug  8 23:48:02 2026 by
+  Generated on Sun Aug  9 00:33:03 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.6).
 </div>
