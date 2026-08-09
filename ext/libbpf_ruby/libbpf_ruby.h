@@ -3,6 +3,7 @@
 
 #include "ruby.h"
 #include "ruby/io.h"
+#include "ruby/thread.h"
 #include "ruby/ractor.h"
 
 #include <bpf/bpf.h>

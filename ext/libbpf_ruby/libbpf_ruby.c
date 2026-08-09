@@ -122,6 +122,134 @@ static struct bpf_program *libbpf_ruby_program_bpf(VALUE self) {
   return libbpf_ruby_program->bpf_program;
 }
 
+typedef struct {
+  const char *path;
+  struct bpf_object *bpf_object;
+} nogvl_open_ctx_t;
+
+typedef struct {
+  struct bpf_object *bpf_object;
+  int err;
+} nogvl_load_ctx_t;
+
+typedef struct {
+  struct bpf_program *bpf_program;
+  struct bpf_link *bpf_link;
+} nogvl_attach_ctx_t;
+
+typedef struct {
+  struct bpf_program *bpf_program;
+  int int_arg;
+  struct bpf_link *bpf_link;
+} nogvl_attach_int_ctx_t;
+
+typedef struct {
+  struct bpf_program *bpf_program;
+  bool retprobe;
+  const char *func_name;
+  struct bpf_link *bpf_link;
+} nogvl_attach_kprobe_ctx_t;
+
+typedef struct {
+  struct bpf_program *bpf_program;
+  pid_t pid;
+  const char *binary_path;
+  size_t offset;
+  const struct bpf_uprobe_opts *opts;
+  struct bpf_link *bpf_link;
+} nogvl_attach_uprobe_ctx_t;
+
+typedef struct {
+  struct bpf_program *bpf_program;
+  const char *category;
+  const char *name;
+  struct bpf_link *bpf_link;
+} nogvl_attach_tracepoint_ctx_t;
+
+typedef struct {
+  struct bpf_program *bpf_program;
+  const char *name;
+  struct bpf_link *bpf_link;
+} nogvl_attach_raw_tracepoint_ctx_t;
+
+static void *nogvl_bpf_object__open_file(void *data) {
+  nogvl_open_ctx_t *ctx = data;
+  ctx->bpf_object = bpf_object__open_file(ctx->path, NULL);
+  return NULL;
+}
+
+static void *nogvl_bpf_object__load(void *data) {
+  nogvl_load_ctx_t *ctx = data;
+  ctx->err = bpf_object__load(ctx->bpf_object);
+  return NULL;
+}
+
+static void *nogvl_bpf_object__close(void *data) {
+  bpf_object__close(data);
+  return NULL;
+}
+
+static void *nogvl_bpf_link__destroy(void *data) {
+  bpf_link__destroy(data);
+  return NULL;
+}
+
+static void *nogvl_bpf_program__attach(void *data) {
+  nogvl_attach_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach(ctx->bpf_program);
+  return NULL;
+}
+
+static void *nogvl_bpf_program__attach_xdp(void *data) {
+  nogvl_attach_int_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_xdp(ctx->bpf_program, ctx->int_arg);
+  return NULL;
+}
+
+#ifdef HAVE_BPF_PROGRAM__ATTACH_TCX
+static void *nogvl_bpf_program__attach_tcx(void *data) {
+  nogvl_attach_int_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_tcx(ctx->bpf_program, ctx->int_arg, NULL);
+  return NULL;
+}
+#endif
+
+static void *nogvl_bpf_program__attach_kprobe(void *data) {
+  nogvl_attach_kprobe_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_kprobe(ctx->bpf_program, ctx->retprobe, ctx->func_name);
+  return NULL;
+}
+
+static void *nogvl_bpf_program__attach_uprobe_opts(void *data) {
+  nogvl_attach_uprobe_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_uprobe_opts(ctx->bpf_program, ctx->pid, ctx->binary_path, ctx->offset, ctx->opts);
+  return NULL;
+}
+
+static void *nogvl_bpf_program__attach_tracepoint(void *data) {
+  nogvl_attach_tracepoint_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_tracepoint(ctx->bpf_program, ctx->category, ctx->name);
+  return NULL;
+}
+
+static void *nogvl_bpf_program__attach_raw_tracepoint(void *data) {
+  nogvl_attach_raw_tracepoint_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_raw_tracepoint(ctx->bpf_program, ctx->name);
+  return NULL;
+}
+
+static void *nogvl_bpf_program__attach_cgroup(void *data) {
+  nogvl_attach_int_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_cgroup(ctx->bpf_program, ctx->int_arg);
+  return NULL;
+}
+
+static void *nogvl_bpf_program__attach_perf_event(void *data) {
+  nogvl_attach_int_ctx_t *ctx = data;
+  ctx->bpf_link = bpf_program__attach_perf_event(ctx->bpf_program, ctx->int_arg);
+  return NULL;
+}
+
 static VALUE rb_cObject_allocate(VALUE klass) {
   libbpf_ruby_object_t *libbpf_ruby_object;
   VALUE obj = TypedData_Make_Struct(klass, libbpf_ruby_object_t, &libbpf_ruby_object_type, libbpf_ruby_object);
@@ -132,19 +260,23 @@ static VALUE rb_cObject_allocate(VALUE klass) {
 static VALUE rb_cObject_initialize(VALUE self, VALUE path) {
   libbpf_ruby_object_t *libbpf_ruby_object;
   TypedData_Get_Struct(self, libbpf_ruby_object_t, &libbpf_ruby_object_type, libbpf_ruby_object);
-  const char *path_str = StringValueCStr(path);
+  StringValueCStr(path);
+  VALUE frozen_path = rb_str_new_frozen(path);
 
-  struct bpf_object *bpf_object = bpf_object__open_file(path_str, NULL);
-  long err = libbpf_get_error(bpf_object);
+  nogvl_open_ctx_t open_ctx = { .path = RSTRING_PTR(frozen_path) };
+  rb_nogvl(nogvl_bpf_object__open_file, &open_ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(open_ctx.bpf_object);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_object__open_file failed: %s", strerror(-err));
   }
-  err = bpf_object__load(bpf_object);
-  if (err) {
-    bpf_object__close(bpf_object);
-    rb_raise(rb_eRuntimeError, "bpf_object__load failed: %s", strerror(-err));
+
+  nogvl_load_ctx_t load_ctx = { .bpf_object = open_ctx.bpf_object };
+  rb_nogvl(nogvl_bpf_object__load, &load_ctx, NULL, NULL, 0);
+  if (load_ctx.err) {
+    rb_nogvl(nogvl_bpf_object__close, open_ctx.bpf_object, NULL, NULL, 0);
+    rb_raise(rb_eRuntimeError, "bpf_object__load failed: %s", strerror(-load_ctx.err));
   }
-  libbpf_ruby_object->bpf_object = bpf_object;
+  libbpf_ruby_object->bpf_object = open_ctx.bpf_object;
   return self;
 }
 
@@ -188,7 +320,7 @@ static VALUE rb_cObject_close(VALUE self) {
   libbpf_ruby_object_t *libbpf_ruby_object;
   TypedData_Get_Struct(self, libbpf_ruby_object_t, &libbpf_ruby_object_type, libbpf_ruby_object);
   if (libbpf_ruby_object->bpf_object) {
-    bpf_object__close(libbpf_ruby_object->bpf_object);
+    rb_nogvl(nogvl_bpf_object__close, libbpf_ruby_object->bpf_object, NULL, NULL, 0);
     libbpf_ruby_object->bpf_object = NULL;
   }
   return Qnil;
@@ -203,31 +335,34 @@ static VALUE rb_cProgram_name(VALUE self) {
 }
 
 static VALUE rb_cProgram_attach(VALUE self) {
-  struct bpf_link *link = bpf_program__attach(libbpf_ruby_program_bpf(self));
-  long err = libbpf_get_error(link);
+  nogvl_attach_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self) };
+  rb_nogvl(nogvl_bpf_program__attach, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 static VALUE rb_cProgram_attach_xdp(VALUE self, VALUE ifindex) {
-  struct bpf_link *link = bpf_program__attach_xdp(libbpf_ruby_program_bpf(self), NUM2INT(ifindex));
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self), .int_arg = NUM2INT(ifindex) };
+  rb_nogvl(nogvl_bpf_program__attach_xdp, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach_xdp failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 #ifdef HAVE_BPF_PROGRAM__ATTACH_TCX
 static VALUE rb_cProgram_attach_tcx(VALUE self, VALUE ifindex) {
-  struct bpf_link *link = bpf_program__attach_tcx(libbpf_ruby_program_bpf(self), NUM2INT(ifindex), NULL);
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self), .int_arg = NUM2INT(ifindex) };
+  rb_nogvl(nogvl_bpf_program__attach_tcx, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach_tcx failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 #endif
 
@@ -239,26 +374,36 @@ static VALUE rb_cProgram_attach_kprobe(int argc, VALUE *argv, VALUE self) {
     VALUE value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_retprobe), Qundef);
     if (value != Qundef) retprobe = RTEST(value);
   }
+  StringValueCStr(func_name);
+  VALUE frozen_func_name = rb_str_new_frozen(func_name);
 
-  struct bpf_link *link = bpf_program__attach_kprobe(libbpf_ruby_program_bpf(self), retprobe, StringValueCStr(func_name));
-  long err = libbpf_get_error(link);
+  nogvl_attach_kprobe_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program_bpf(self),
+    .retprobe = retprobe,
+    .func_name = RSTRING_PTR(frozen_func_name)
+  };
+  rb_nogvl(nogvl_bpf_program__attach_kprobe, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach_kprobe failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
   VALUE binary_path, kwargs;
   rb_scan_args(argc, argv, "1:", &binary_path, &kwargs);
-  const char *func_name = NULL;
+  VALUE frozen_func_name = Qnil;
   size_t offset = 0;
   pid_t pid = -1;
   bool retprobe = false;
   if (!NIL_P(kwargs)) {
     VALUE value;
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_func_name), Qundef);
-    if (value != Qundef) func_name = StringValueCStr(value);
+    if (value != Qundef) {
+      StringValueCStr(value);
+      frozen_func_name = rb_str_new_frozen(value);
+    }
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_offset), Qundef);
     if (value != Qundef) offset = NUM2SIZET(value);
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_pid), Qundef);
@@ -266,41 +411,71 @@ static VALUE rb_cProgram_attach_uprobe(int argc, VALUE *argv, VALUE self) {
     value = rb_hash_lookup2(kwargs, ID2SYM(id_kwarg_retprobe), Qundef);
     if (value != Qundef) retprobe = RTEST(value);
   }
+  StringValueCStr(binary_path);
+  VALUE frozen_binary_path = rb_str_new_frozen(binary_path);
 
-  LIBBPF_OPTS(bpf_uprobe_opts, uopts, .retprobe = retprobe, .func_name = func_name);
-  struct bpf_link *link = bpf_program__attach_uprobe_opts(libbpf_ruby_program_bpf(self), pid, StringValueCStr(binary_path), offset, &uopts);
-  long err = libbpf_get_error(link);
+  LIBBPF_OPTS(bpf_uprobe_opts, uopts,
+    .retprobe = retprobe,
+    .func_name = NIL_P(frozen_func_name) ? NULL : RSTRING_PTR(frozen_func_name)
+  );
+  nogvl_attach_uprobe_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program_bpf(self),
+    .pid = pid,
+    .binary_path = RSTRING_PTR(frozen_binary_path),
+    .offset = offset,
+    .opts = &uopts
+  };
+  rb_nogvl(nogvl_bpf_program__attach_uprobe_opts, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach_uprobe_opts failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 static VALUE rb_cProgram_attach_tracepoint(VALUE self, VALUE category, VALUE name) {
-  struct bpf_link *link = bpf_program__attach_tracepoint(libbpf_ruby_program_bpf(self), StringValueCStr(category), StringValueCStr(name));
-  long err = libbpf_get_error(link);
+  StringValueCStr(category);
+  StringValueCStr(name);
+  VALUE frozen_category = rb_str_new_frozen(category);
+  VALUE frozen_name = rb_str_new_frozen(name);
+
+  nogvl_attach_tracepoint_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program_bpf(self),
+    .category = RSTRING_PTR(frozen_category),
+    .name = RSTRING_PTR(frozen_name)
+  };
+  rb_nogvl(nogvl_bpf_program__attach_tracepoint, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach_tracepoint failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 static VALUE rb_cProgram_attach_raw_tracepoint(VALUE self, VALUE name) {
-  struct bpf_link *link = bpf_program__attach_raw_tracepoint(libbpf_ruby_program_bpf(self), StringValueCStr(name));
-  long err = libbpf_get_error(link);
+  StringValueCStr(name);
+  VALUE frozen_name = rb_str_new_frozen(name);
+
+  nogvl_attach_raw_tracepoint_ctx_t ctx = {
+    .bpf_program = libbpf_ruby_program_bpf(self),
+    .name = RSTRING_PTR(frozen_name)
+  };
+  rb_nogvl(nogvl_bpf_program__attach_raw_tracepoint, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach_raw_tracepoint failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 static VALUE rb_cProgram_attach_cgroup(VALUE self, VALUE cgroup) {
-  struct bpf_link *link = bpf_program__attach_cgroup(libbpf_ruby_program_bpf(self), rb_io_descriptor(cgroup));
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = libbpf_ruby_program_bpf(self), .int_arg = rb_io_descriptor(cgroup) };
+  rb_nogvl(nogvl_bpf_program__attach_cgroup, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     rb_raise(rb_eRuntimeError, "bpf_program__attach_cgroup failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
@@ -309,13 +484,14 @@ static VALUE rb_cProgram_attach_perf_event(VALUE self, VALUE perf_event) {
   if (perf_fd < 0) {
     rb_raise(rb_eRuntimeError, "dup failed: %s", strerror(errno));
   }
-  struct bpf_link *link = bpf_program__attach_perf_event(program, perf_fd);
-  long err = libbpf_get_error(link);
+  nogvl_attach_int_ctx_t ctx = { .bpf_program = program, .int_arg = perf_fd };
+  rb_nogvl(nogvl_bpf_program__attach_perf_event, &ctx, NULL, NULL, 0);
+  long err = libbpf_get_error(ctx.bpf_link);
   if (err) {
     close(perf_fd);
     rb_raise(rb_eRuntimeError, "bpf_program__attach_perf_event failed: %s", strerror(-err));
   }
-  return libbpf_ruby_link_wrap(self, link);
+  return libbpf_ruby_link_wrap(self, ctx.bpf_link);
 }
 
 static VALUE rb_cLink_fd(VALUE self) {
@@ -331,7 +507,7 @@ static VALUE rb_cLink_detach(VALUE self) {
   libbpf_ruby_link_t *libbpf_ruby_link;
   TypedData_Get_Struct(self, libbpf_ruby_link_t, &libbpf_ruby_link_type, libbpf_ruby_link);
   if (libbpf_ruby_link->bpf_link) {
-    bpf_link__destroy(libbpf_ruby_link->bpf_link);
+    rb_nogvl(nogvl_bpf_link__destroy, libbpf_ruby_link->bpf_link, NULL, NULL, 0);
     libbpf_ruby_link->bpf_link = NULL;
   }
   return Qnil;
